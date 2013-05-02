@@ -70,9 +70,9 @@ app.post('/api/unflag', function(req, res, next){
 
 app.get('/api/flagged', function(req, res, next){
   client.hgetall('flags', function(err, flags){
-    // use etag where possible
-    // add randomness in there or do this on client??
-    res.json({flags: flags});
+    // TODO: use etag
+    // TODO: add randomness here or in client?
+    res.json({flags: flags || {}});
   });
 });
 
