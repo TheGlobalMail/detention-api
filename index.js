@@ -26,30 +26,38 @@ app.configure(function(){
 app.post('/api/flag', function(req, res, next){
   var flag = uuid.v4();
   var id = req.body.id || '';
+  var flagged = 0;
   if (!id.match(/1-\w{3,8}/)){
     return res.json(404, {result: 'id not found'});
   }
   async.waterfall([
     function(cb){ client.sadd(id, flag, cb); },
     function(result, cb){ client.smembers(id, cb); },
-    function(flags, cb){ client.hset('flags', id, flags.length, cb); },
+    function(flags, cb){
+      flagged = flags.length;
+      client.hset('flags', id, flagged, cb);
+    },
   ], function(err){
     if (err) return next(err);
-    res.json({flag: flag});
+    res.json({flag: flag, flagged: flagged});
   })
 });
 
 app.post('/api/unflag', function(req, res, next){
   var id = req.body.id || '';
   var flag = req.body.flag || '';
+  var flagged = 0;
   if (!flag || !id) return res.json(404, {result: 'id and flag combination not found'});
   async.waterfall([
     function(cb){ client.srem(id, flag, cb); },
     function(result, cb){ client.smembers(id, cb); },
-    function(flags, cb){ client.hset('flags', id, flags.length, cb); },
+    function(flags, cb){
+      flagged = flags.length;
+      client.hset('flags', id, flagged, cb);
+    },
   ], function(err){
     if (err) return next(err);
-    res.json({flag: flag});
+    res.json({flag: flag, flagged: flagged});
   })
 });
 
@@ -57,7 +65,6 @@ app.get('/api/flagged', function(req, res, next){
   client.hgetall('flags', function(err, flags){
     // use etag where possible
     // add randomness in there or do this on client??
-    console.error(flags);
     res.json({flags: flags});
   });
 });

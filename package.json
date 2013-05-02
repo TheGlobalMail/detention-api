@@ -4,7 +4,7 @@
   "description": "API for flagging detention incidents",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/.bin/jasmine-node spec/api/"
+    "test": "./node_modules/.bin/mocha ./spec/api/"
   },
   "repository": {
     "type": "git",
@@ -18,8 +18,9 @@
   "author": "The Global Mail",
   "license": "MIT",
   "devDependencies": {
-    "frisby": "~0.6.7",
-    "jasmine-node": "~1.7.0"
+    "mocha": "~1.9.0",
+    "should": "~1.2.0",
+    "request": "~2.21.0"
   },
   "dependencies": {
     "express": "~3.2.1",
