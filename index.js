@@ -3,7 +3,14 @@ var app = express();
 var uuid = require('node-uuid');
 var async = require('async');
 var redis = require('redis');
-client = redis.createClient();
+
+if (process.env.REDISTOGO_URL) {
+  var rtg   = require("url").parse(process.env.REDISTOGO_URL);
+  var client = redis.createClient(rtg.port, rtg.hostname);
+  client.auth(rtg.auth.split(":")[1]);
+} else {
+  client = redis.createClient();
+}
 
 var cors = function(req, res, next) {
   res.header('Cache-Control', 'max-age=300');
