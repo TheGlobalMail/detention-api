@@ -3,6 +3,7 @@ var app = express();
 var uuid = require('node-uuid');
 var async = require('async');
 var redis = require('redis');
+var _ = require('lodash');
 
 if (process.env.REDISTOGO_URL) {
   var rtg   = require("url").parse(process.env.REDISTOGO_URL);
@@ -72,7 +73,12 @@ app.get('/api/flagged', function(req, res, next){
   client.hgetall('flags', function(err, flags){
     // TODO: use etag
     // TODO: add randomness here or in client?
-    res.json({flags: flags || {}});
+    // Alas, we seem to have to parse integers
+    flags = flags || {};
+    _.forOwn(flags, function(count, id){
+      flags[id] = parseInt(count, 10);
+    });
+    res.json({flags: flags});
   });
 });
 
