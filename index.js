@@ -19,6 +19,11 @@ var cors = function(req, res, next) {
   res.header('Access-Control-Allow-Methods', 'GET');
   res.header('Access-Control-Expose-Headers', 'If-None-Match,Etag');
   res.header('Access-Control-Max-Age', '36000');
+  if (req.method === 'POST'){
+    // Hack to correctly get bodyParser to work with IE CORS as IE does not set
+    // the headers correctly
+    req.headers['content-type'] = 'application/x-www-form-urlencoded';
+  }
   next();
 };
 
@@ -35,7 +40,12 @@ app.post('/api/flag', function(req, res, next){
   var flag = uuid.v4();
   var id = req.body.id || '';
   var flagged = 0;
+  if (!req.get('Origin')){
+    // someone trying to replay post without CORS?
+    return res.json(403, {result: 'invalid'});
+  }
   if (!id.match(/1-\w{3,8}/)){
+    console.log('got id: ' + id)
     return res.json(404, {result: 'id not found'});
   }
   async.waterfall([
@@ -71,8 +81,6 @@ app.post('/api/unflag', function(req, res, next){
 
 app.get('/api/flagged', function(req, res, next){
   client.hgetall('flags', function(err, flags){
-    // TODO: use etag
-    // TODO: add randomness here or in client?
     // Alas, we seem to have to parse integers
     flags = flags || {};
     _.forOwn(flags, function(count, id){

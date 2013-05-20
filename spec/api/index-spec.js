@@ -10,6 +10,8 @@ describe('/api', function(){
 
   var client;
 
+  request = request.defaults({headers: {'Origin': 'http://localhost:9040'}});
+
   before(function(done){
     client = redis.createClient();
     client.flushdb(function(err){
@@ -37,6 +39,25 @@ describe('/api', function(){
       it("should return the total number of times that incident has been flagged", function(){
         json.flagged.should.equal(1)
       });
+    });
+
+    describe('POSTed to with a valid flag id BUT missing the Origin header' , function(){
+
+      var json, result;
+
+      before(function(done){
+        request.post({url: URL + '/api/flag', headers: {'Origin': ''}, form: {id: '1-2522'}}, function(err, res, body){
+          result = res;
+          json = JSON.parse(body);
+          done();
+        });
+      });
+
+      it("should reject the request with a 403", function(){
+        json.result.should.equal('invalid')
+        result.statusCode.should.equal(403);
+      });
+
     });
   });
 
