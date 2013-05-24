@@ -13,41 +13,23 @@ if (process.env.REDISTOGO_URL) {
   client = redis.createClient();
 }
 
-var cors = function(req, res, next) {
-  res.header('Cache-Control', 'max-age=300');
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS,HEAD');
-  res.header('Access-Control-Expose-Headers', 'If-None-Match,Etag');
-  res.header('Access-Control-Allow-Headers', 'accept, origin, authorization, content-type');
-  res.header('Access-Control-Max-Age', '36000');
-  if (req.method === 'POST'){
-    // Hack to correctly get bodyParser to work with IE CORS as IE does not set
-    // the headers correctly
-    req.headers['content-type'] = 'application/x-www-form-urlencoded';
-  }
-  next();
-};
-
 app.configure(function(){
   app.use(express.responseTime()); 
-  app.use(cors);
   app.use(express.compress());
-  app.use(express.bodyParser()); 
   app.use(app.router);
   app.use(express.errorHandler()); 
 });
 
-app.post('/api/flag', function(req, res, next){
+app.get('/api/flag', function(req, res, next){
   var flag = uuid.v4();
-  var id = req.body.id || '';
+  var id = req.query.id || '';
   var flagged = 0;
-  if (!req.get('Origin')){
-    // someone trying to replay post without CORS?
-    return res.json(403, {result: 'invalid'});
+  if (!req.query.callback || !req.query.callback.match(/jquery/i)){
+    // someone trying to access the api directly??
+    return res.jsonp(403, {result: 'invalid'});
   }
   if (!id.match(/1-\w{3,8}/)){
-    console.log('got id: ' + id)
-    return res.json(404, {result: 'id not found'});
+    return res.jsonp(404, {result: 'id not found'});
   }
   async.waterfall([
     function(cb){ client.sadd(id, flag, cb); },
@@ -58,15 +40,15 @@ app.post('/api/flag', function(req, res, next){
     },
   ], function(err){
     if (err) return next(err);
-    res.json({flag: flag, flagged: flagged});
+    res.jsonp({flag: flag, flagged: flagged});
   })
 });
 
-app.post('/api/unflag', function(req, res, next){
-  var id = req.body.id || '';
-  var flag = req.body.flag || '';
+app.get('/api/unflag', function(req, res, next){
+  var id = req.query.id || '';
+  var flag = req.query.flag || '';
   var flagged = 0;
-  if (!flag || !id) return res.json(404, {result: 'id and flag combination not found'});
+  if (!flag || !id) return res.jsonp(404, {result: 'id and flag combination not found'});
   async.waterfall([
     function(cb){ client.srem(id, flag, cb); },
     function(result, cb){ client.smembers(id, cb); },
@@ -76,7 +58,7 @@ app.post('/api/unflag', function(req, res, next){
     },
   ], function(err){
     if (err) return next(err);
-    res.json({flag: flag, flagged: flagged});
+    res.jsonp({flag: flag, flagged: flagged});
   })
 });
 
@@ -87,7 +69,7 @@ app.get('/api/flagged', function(req, res, next){
     _.forOwn(flags, function(count, id){
       flags[id] = parseInt(count, 10);
     });
-    res.json({flags: flags});
+    res.jsonp({flags: flags});
   });
 });
 
