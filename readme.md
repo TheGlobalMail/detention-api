@@ -19,5 +19,3 @@ Endpoints:
 
 TODO
 =====
-
-* Add middleware to validate tokens

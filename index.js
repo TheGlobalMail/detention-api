@@ -16,7 +16,7 @@ if (process.env.REDISTOGO_URL) {
 var cors = function(req, res, next) {
   res.header('Cache-Control', 'max-age=300');
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET');
+  res.header('Access-Control-Allow-Methods', 'GET,POST');
   res.header('Access-Control-Expose-Headers', 'If-None-Match,Etag');
   res.header('Access-Control-Max-Age', '36000');
   if (req.method === 'POST'){
